@@ -1,0 +1,29 @@
+---
+title: "3.2_ZimmerAlexis"
+output: pdf_document
+date: '2022-06-27'
+---
+
+## loading data
+survey_df <- read.csv("data/acs-14-1yr-s0201.csv")
+
+## 2. output from str(); nrow(); ncol()
+str(survey_df)
+nrow(survey_df)
+ncol(survey_df)
+
+## 3. create histogram of the HSDegree variable using ggplot2
+library(ggplot2)
+ggplot(survey_df, aes(HSDegree)) + geom_histogram(fill="blue", color="black", binwidth = 1, bins = 50) + ggtitle("HSDegree Distribution") + ylab("Count") + xlab("% of People with HSDegree")
+
+## include a normal plot for histogram
+ggplot(data = survey_df) + geom_histogram(mapping = aes(x = HSDegree, y = ..density..), fill="blue", color="black", binwidth = 1, bins = 50) + ggtitle("HSDegree Distribution") + ylab("Relative Frequency") + xlab("% of People with HSDegree") +stat_function(fun = dnorm, color="red", args = list(mean = mean(survey_df$HSDegree), sd = sd(survey_df$HSDegree)))
+
+## create a probability plot for HSDegree
+ggplot(survey_df, aes(sample=HSDegree)) + stat_qq(col="blue") + stat_qq_line(col="red", lty=2)
+
+## quantify normality using stat.desc()
+library(pastecs)
+stat.desc(survey_df[HSDegree], basic = TRUE, desc = TRUE, norm = TRUE, p = 0.95)
+
+

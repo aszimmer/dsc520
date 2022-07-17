@@ -1,0 +1,117 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={3.2\_ZimmerAlexis},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{3.2\_ZimmerAlexis}
+\author{}
+\date{\vspace{-2.5em}2022-06-27}
+
+\begin{document}
+\maketitle
+
+\hypertarget{loading-data}{%
+\subsection{loading data}\label{loading-data}}
+
+survey\_df \textless- read.csv(``data/acs-14-1yr-s0201.csv'')
+
+\hypertarget{output-from-str-nrow-ncol}{%
+\subsection{2. output from str(); nrow();
+ncol()}\label{output-from-str-nrow-ncol}}
+
+str(survey\_df) nrow(survey\_df) ncol(survey\_df)
+
+\hypertarget{create-histogram-of-the-hsdegree-variable-using-ggplot2}{%
+\subsection{3. create histogram of the HSDegree variable using
+ggplot2}\label{create-histogram-of-the-hsdegree-variable-using-ggplot2}}
+
+library(ggplot2) ggplot(survey\_df, aes(HSDegree)) +
+geom\_histogram(fill=``blue'', color=``black'', binwidth = 1, bins = 50)
++ ggtitle(``HSDegree Distribution'') + ylab(``Count'') + xlab(``\% of
+People with HSDegree'')
+
+\hypertarget{include-a-normal-plot-for-histogram}{%
+\subsection{include a normal plot for
+histogram}\label{include-a-normal-plot-for-histogram}}
+
+ggplot(data = survey\_df) + geom\_histogram(mapping = aes(x = HSDegree,
+y = ..density..), fill=``blue'', color=``black'', binwidth = 1, bins =
+50) + ggtitle(``HSDegree Distribution'') + ylab(``Relative Frequency'')
++ xlab(``\% of People with HSDegree'') +stat\_function(fun = dnorm,
+color=``red'', args = list(mean =
+mean(survey\_df\(HSDegree), sd = sd(survey_df\)HSDegree)))
+
+\hypertarget{create-a-probability-plot-for-hsdegree}{%
+\subsection{create a probability plot for
+HSDegree}\label{create-a-probability-plot-for-hsdegree}}
+
+ggplot(survey\_df, aes(sample=HSDegree)) + stat\_qq(col=``blue'') +
+stat\_qq\_line(col=``red'', lty=2)
+
+\hypertarget{quantify-normality-using-stat.desc}{%
+\subsection{quantify normality using
+stat.desc()}\label{quantify-normality-using-stat.desc}}
+
+library(pastecs) stat.desc(survey\_df{[}HSDegree{]}, basic = TRUE, desc
+= TRUE, norm = TRUE, p = 0.95)
+
+\end{document}
