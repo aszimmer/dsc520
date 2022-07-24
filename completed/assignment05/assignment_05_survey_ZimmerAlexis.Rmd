@@ -1,0 +1,134 @@
+---
+title: "DSC520_7_StudentSurvey_ZimmerAlexis"
+output:
+  pdf_document: default
+  word_document: default
+date: '2022-07-24'
+---
+
+Set the working directory to the root of your DSC 520 directory
+
+```{r}
+setwd("C:/Users/alexi/OneDrive/Documents/GitHub/dsc520")
+Survey_df <- read.csv("data/student-survey.csv")
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+Load libraries
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(formatR)
+```
+
+1.  Use R to calculate the covariance of the Survey variables and provide an explanation of why you would use this calculation and what the results indicate.
+
+```{r}
+## I chose Pearson's correlation, since we can see a linear relatinoship within our survey data. TimeReading is negatively related to TimeTV. With a Pearon correlation of -0.8830677, we can assume that as TimeTV increaes, TimeReading decreases. In a similar idea, TimeReading is negatively related to happiness with an r-value of -0.4348663, so we can assume that as TimeReading increases, Happiness decreases.
+
+cor(Survey_df[, c("TimeReading", "TimeTV", "Happiness")])
+
+GGally::ggpairs(Survey_df[, c("TimeReading", "TimeTV", "Happiness")])
+```
+
+2.  Examine the Survey data variables. What measurement is being used for the variables? Explain what effect changing the measurement being used for the variables would have on the covariance calculation. Would this be a problem? Explain and provide a better alternative if needed.
+
+```{r}
+## Variables:
+## TimeReading = hours (numeric)
+## TimeTV = minutes (numeric)
+## Happiness = int % (float)
+## Gender = binary (numeric)
+
+setwd("C:/Users/alexi/OneDrive/Documents/GitHub/dsc520")
+Survey2_df <- read.csv("data/student-survey.csv")
+Survey2_df$TimeReading <- Survey2_df$TimeReading * 60
+Survey2_df
+cor(Survey2_df[, c("TimeReading", "TimeTV", "Happiness")])
+
+
+## If we changed the measurement being used for the variables, the effect on the covariance calculation would be null so not a problem. No alternative is needed.
+
+```
+
+3.  Choose the type of correlation test to perform, explain why you chose this test, and make a prediction if the test yields a positive or negative correlation?
+
+```{r}
+
+## Pearon's Correlation with a .95 Confidence level, assuming that the correlation of TimeTV and Happiness will result in > 0
+cor.test(Survey_df$TimeTV, Survey_df$Happiness, alternative = "less", method = "pearson", conf.level = 0.95)
+
+
+## Pearson's Correlation with a .95 Confidence level, assuming that the correlation of ReadingTime and TVTime will result in < 0
+cor.test(Survey_df$TimeReading, Survey_df$Happiness, alternative = "less", method = "pearson", conf.level = 0.95)
+```
+
+4.  Perform a correlation analysis of:
+5.  all variables
+6.  a single correlation between two a pair of the variables
+7.  Repeat your correlation test in step 2 but set the confidence interval at 99%
+8.  Describe what the calculations in the correlation matrix suggest about the relationship between the variables. Be specific with your explanation.
+
+```{r}
+## 1. 
+cor(Survey_df, use = "complete.obs", method = "pearson")
+
+## 2.
+cor(Survey_df$TimeReading, Survey_df$TimeTV, use = "complete.obs", method = "pearson")
+
+## 3.
+cor.test(Survey_df$TimeReading, Survey_df$TimeTV, alternative = "less", method = "pearson", conf.level = 0.99)
+
+## 4.
+## The calculations in the correlation matrix suggest ReadingTime is inversely related to TimeTV at a confidence interval of 99%, so we can safely assume that as ReadingTime increases, TimeTV decreases (and vice versa)
+```
+
+5.  Calculate the correlation coefficient and the coefficient of determination, describe what you conclude about the results.
+
+```{r}
+library(Hmisc)
+rcorr(as.matrix(Survey_df[, c("TimeReading", "TimeTV", "Happiness")]))
+
+coeffDet <- (-0.88) * (-0.88) * 100
+coeffDet
+
+cor(Survey_df)^2 * 100
+
+## Based on the results, I conclude that TimeTV is negatively related to TimeReading with an r value of -0.88 and a p-value of 0.0003. With a significance value close to null, the probability of getting a large correlation coefficient in an n-size of 11 if H0 = true is incredibly low. Thus, we can assume that there is a genuine relationship between TimeTV and TimeReading. Additionally, all of our correlation coefficients are significant.
+## The coefficient of Determination is 77.44%, which shows that TimeTV is highly correlated with TimeReading. TimeTV accounts for 40.52% of the variability in Happiness, and Happiness accounts for 18.92% of variability in TimeReading
+
+```
+
+6.  Based on your analysis can you say that watching more TV caused students to read less? Explain
+
+```{r}
+##Based on my analysis, I can say that watching more TV caused students to read less, as the calculations showed a strong inverse relationship between the two, in which watching more TV negatively affected time reading.
+```
+
+7.  Pick three variables and perform a partial correlation, documenting which variable you are "controlling". Explain how this changes your interpretation and explanation of the results.\
+
+```{r}
+library(ggm)
+
+Survey_df <- Survey_df[, c("TimeReading", "TimeTV", "Happiness")]
+
+pc <- pcor(c("TimeTV", "TimeReading", "Happiness"), var(Survey_df))
+pc
+pc <- pc^2
+
+pc
+pcor.test(pc, 1, 11)
+
+## There is a partial correlation between TimeReading and TimeTV if Happiness is controlled, resulting in ~87.30%
+
+pc2 <- pcor(c("TimeTV", "Happiness", "TimeReading"), var(Survey_df))
+pc2
+pc2 <- pc2^2
+
+pc2
+pcor.test(pc2, 1, 11)
+
+## There is a partial correlation between TimeTV and Happiness if TimeReading is controlled, resulting in ~35.72%
+```
