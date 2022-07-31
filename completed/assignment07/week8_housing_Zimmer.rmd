@@ -1,0 +1,205 @@
+---
+title: "Week8_Housing_Zimmer"
+output: word_document
+date: '2022-07-31'
+---
+
+
+## set working directory
+```{r}
+setwd("C:/Users/alexi/OneDrive/Documents/GitHub/dsc520")
+week_7_housing <- read_excel("data/week-7-housing.xlsx")
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+## load libraries
+```{r}
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(formatR)
+library(car)
+```
+
+## Complete the following:
+## Explain any transformations or modifications you made to the dataset
+```{r}
+## added new column that calculated all bathrooms in a home to get an idea of bathrooms faster than adding 3 columns separately by count and then weighing their value
+week_7_housing <- within(week_7_housing, total_bath <- bath_full_count + (bath_half_count/2) + bath_3qtr_count/3)
+
+## defined relevant datapoints by sale price (if sale price < 2,000,000 and square foot lot < 20,000) to reduce noise
+## remove data rows where bedrooms = 0, min value should not be possible
+## remove where sale_warning is NA 
+week_7_housing = week_7_housing[week_7_housing$`Sale Price` < 2000000 & week_7_housing$sq_ft_lot < 20000, ] + week_7_housing <- week_7_housing[(is.na(week_7_housing$sale_warning)) & (week_7_housing$bedrooms != 0), ]
+
+## remove irrelevant columns or majority incomplete columns, cannot extract meaningful data from incomplete zip/city/etc
+## in example, cityname had many nulls but can be replaced more accurately with zip5
+week_7_housing <- within(week_7_housing, {
+  addr_full <- NULL
+  building_grade <- NULL
+  ctyname <- NULL
+  lat <- NULL
+  lon <- NULL
+  sale_instrument <- NULL 
+  sale_reason <- NULL
+  sale_warning <- NULL
+  sitetype <- NULL
+  year_renovated <- NULL 
+})
+
+## validate removals (no changes to rows ultimately)
+week_7_housing_Updated <- na.omit(week_7_housing)
+
+```
+
+
+
+## Create two variables: one that will contain the variables Sale Price and Square Foot of Lot and one that will contain Sale Price and several additional predictors of your choice. Explain the basis for your additional predictor selections.
+```{r}
+RegModel.1 <- lm(week_7_housing$`Sale Price`~square_feet_total_living, data = week_7_housing_Updated)
+summary(RegModel.1)
+```
+
+
+```{r}
+##nI chose these variables as I would predict that they would impact a house's sale price--total livable square feet, total baths, and the square footage of the lot
+
+RegModel.2 <- lm(week_7_housing$`Sale Price`~week_7_housing$square_feet_total_living+week_7_housing$total_bath+week_7_housing$sq_ft_lot, 
+  data = week_7_housing_Updated)
+summary(RegModel.2)
+```
+
+
+## Execute a summary() function on two variables defined in the previous step to compare the model results. What are the R2 and Adjusted R2 statistics? Explain what these results tell you about the overall model. Did the inclusion of the additional predictors help explain any large variations found in Sale Price?
+```{r}
+## executed summaries in previous chunks
+## R2 = ~.2066
+## Adjusted R2 = ~.2123
+## By adding in more dependent variables to our model, we were able to see that increase in R2, which suggests that our data better fits the model. These additional predictors help explain large variations found in the sale price, as there are many contributing factors that cause a house's price/estimated value to change.
+
+```
+
+
+## Considering the parameters of the multiple regression model you have created. What are the standardized betas for each parameter and what do the values indicate?
+```{r}
+compareCoefs(RegModel.1, RegModel.2)
+```
+```{r}
+anova(RegModel.1, RegModel.2)
+
+## Reviewing the model comparisons, we can see that lot size and total number of bathrooms are strong, early indicators to sale price. 
+```
+
+
+## Calculate the confidence intervals for the parameters in your model and explain what the results indicate. 
+```{r}
+library(MASS, pos = 18)
+
+with(week_7_housing_Updated, (t.test(week_7_housing$`Sale Price`, week_7_housing$square_feet_total_living, alternative = 'two.sided', conf.level = .95, paired = TRUE)))
+
+## 95% confidence interval = default
+
+```
+
+
+## Assess the improvement of the new model compared to your original model (simple regression model) by testing whether this change is significant by performing an analysis of variance
+```{r}
+compareCoefs(RegModel.1, RegModel.2)
+```
+
+
+## Perform casewise diagnostics to identify outliers and/or influential cases, storing each function's output in a dataframe assigned to a unique variable name
+```{r}
+RegModelOrg <- 
+  lm(week_7_housing_original$`Sale Price`~week_7_housing_original$square_feet_total_living+week_7_housing_original$bath_3qtr_count+week_7_housing_original$bath_full_count+week_7_housing_original$bath_half_count+week_7_housing_original$bedrooms+week_7_housing_original$building_grade+week_7_housing_original$lat+week_7_housing_original$lon+week_7_housing_original$present_use+week_7_housing_original$sq_ft_lot+week_7_housing_original$year_built+week_7_housing_original$year_renovated+week_7_housing_original$zip5,
+     data=week_7_housing_original)
+summary(RegModelOrg)
+```
+
+```{r}
+outlierTest(RegModelOrg)
+```
+
+```{r}
+outlierTest(RegModel.1)
+```
+```{r}
+outlierTest(RegModel.2)
+```
+```{r}
+## remove outliers from tests
+Out_L_week_7_housing <- week_7_housing[-c(11992,6430,6438,6437,6431,6436,6441,6432,6442,6433,4649), ]
+
+RegModel.3 <- lm(week_7_housing$`Sale Price`~week_7_housing$square_feet_total_living, data = Out_L_week_7_housing)
+summary(RegModel.3)
+```
+```{r}
+Out_L_week_7_housing_original <- week_7_housing_original[-c(11992,6430,6438,6437,6431,6436,6441,6432,6442,6433,4649),]
+```
+
+
+```{r}
+RegModel.4 <- lm(week_7_housing$`Sale Price`~week_7_housing$square_feet_total_living+week_7_housing$bath_full_count+week_7_housing$bath_half_count+week_7_housing$bath_3qtr_count+week_7_housing$bedrooms+week_7_housing$sq_ft_lot, 
+  data = Out_L_week_7_housing)
+summary(RegModel.4)
+```
+
+## Calculate the standardized residuals using the appropriate command, specifying those that are +-2, storing the results of large residuals in a variable you create
+
+```{r}
+str(Out_L_week_7_housing)
+```
+
+
+```{r}
+
+
+week_7_housing$standardized.residuals <- rstandard(RegModel.4)
+week_7_housing$studentized.residuals <- rstudent(RegModel.4)
+week_7_housing$cooks.distance <- cooks.distance(RegModel.4)
+week_7_housing$dfbeta <- dfbeta(RegModel.4)
+week_7_housing$leverage <- hatvalues(RegModel.4)
+week_7_housing$covariance.ratios <- covratio(RegModel.4)
+```
+
+## Use the appropriate function to show the sum of large residuals
+```{r}
+week_7_housing$large.residual <- week_7_housing$standardized.residuals > 2 | week_7_housing$studentized.residuals < -2
+```
+
+## Which specific variable have large residuals (only cases that evaluate as TRUE)?
+```{r}
+sum(week_7_housing$large.residual)
+```
+
+## Investigate further by calculating the leverage, cooks distance, and covariance rations. Comment on all cases that are problematics
+```{r}
+week_7_housing[week_7_housing$large.residual , c("leverage" , "cooks.distance","covariance.ratios") ]
+```
+
+
+## Perform the necessary calculations to assess the assumption of independence and state if the condition is met or not
+```{r}
+dwt(RegModel.4)
+```
+
+
+## Visually check the assumptions related to the residuals using the plot() and hist() functions. Summarize what each graph is informing you of and if any anomalies are present
+```{r}
+hist(week_7_housing$studentized.residuals)
+```
+```{r}
+library(lattice, pos = 24)
+xyplot(square_feet_total_living ~ `Sale Price` | large.residual, groups = large.residual, type = "p", pch = 16, 
+  auto.key = list(border = TRUE), par.settings = simpleTheme(pch = 16), scales = list(x = list(relation = 'same'), 
+  y = list(relation = 'same')), data = week_7_housing)
+```
+```{r}
+## Both visualizations show outliers, particularly in their max values. 
+```
+
+
+## Overall, is this regression model unbiased? If an unbiased regression model, what does this tell us about the sample vs the entire population model?
+```{r}
+## Without spending more time with the data, it appears we could be missing predictor values. I think it would be useful to re-evaluate the columns I deemed irrelevant early on in the exercise, We are also missing some predictor values that may be considered useful for indicating a home's sale price like housing market (are we assuming date of?) or overall house condition. Bringing in additional context from other tables like neighborhood value might be useful as well. Overall, more fine-tuning and better understanding of the research question at hand are needed to better shape the models.
+```
