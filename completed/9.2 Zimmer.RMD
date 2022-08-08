@@ -1,0 +1,83 @@
+---
+title: "DSC520_9.2_Zimmer"
+output: word_document
+date: '2022-08-07'
+---
+
+PART 1
+1. Fit a binary logistic regression model to the data set that predicts whether or not the patient survived for one year (the Risk1Y variable) after the surgery. Use the glm() function to perform the logistic regression. See Generalized Linear Models for an example. Include a summary using the summary() function in your results.
+```{r}
+setwd("C:/Users/alexi/OneDrive/Documents/GitHub/dsc520")
+library('foreign')
+
+thoracicSurgery_df <- read.arff("data/ThoraricSurgery.arff")
+```
+
+```{r}
+# logistic regression model
+thoracicSurgery_glm <- glm(Risk1Yr ~ DGN + PRE4 + PRE5 + PRE6 + PRE7 + PRE8 + PRE9 + PRE10 + PRE11 + PRE14 + PRE17 + PRE19 + PRE25 + PRE30 + PRE32 + AGE, data = thoracicSurgery_df, family = binomial)
+
+summary(thoracicSurgery_glm)
+```
+
+
+2. According to the summary, which variables had the greatest effect on the survival rate?
+```{r}
+According to the summary above, the variables that had the greatest effect on the survival rate are:
+  1. PRE9T, which indicates whether the patient had Dyspnoea before surgery
+  2. PRE17T, which indicates whether the patient had Type 2 diabetes
+  3. PRE14OC14, which is the largest size of the original tumor
+  4. PRE30T, which indicates whether the patient was a smoker or not
+  5. PRE140C13, which is the second largest size of the original tumor
+  6. PRE5, which indicates the volume that has been exhaled at the end of the first second of forced expiration
+```
+
+
+3. To compute the accuracy of your model, use the dataset to predict the outcome variable. The percent of correct predictions is the accuracy of your model. What is the accuracy of your model?
+```{r}
+res_val <- predict(thoracicSurgery_glm, type = "response")
+
+SurgPredictionData <- table(Actual_Value = thoracicSurgery_df$Risk1Yr, Predicted_value = res_val > 0.5)
+
+SurgPredictionData
+
+modelAccuracy <- (SurgPredictionData[[1, 1]] + SurgPredictionData[[2, 2]] / sum(SurgPredictionData))
+
+## (390 + 3) / (390 + 67 + 10 + 3)
+## ~ 83 % model accuracy
+```
+
+
+PART 2
+1. Fit a logistic regression model to the binary-classifier-data.csv dataset.
+```{r}
+setwd("C:/Users/alexi/OneDrive/Documents/GitHub/dsc520")
+
+binary_df <- read.csv("data/binary-classifier-data.csv")
+
+```
+
+```{r}
+## logistic regression model
+binary_glm <- glm(label ~ x + y, data = binary_df, family = binomial)
+
+summary(binary_glm)
+```
+
+
+2. The data contains three variables: label, x, and y. The label variable is either 0 or 1 and is the output we want to predict using the x and y variables. What is the accuracy of the logistic regression classifier?
+```{r}
+res_val <- predict(binary_glm, type = "response")
+
+bcPredictionData <- table(Actual_Value = binary_df$label, Predicted_Value = res_val > 0.5)
+
+bcPredictionData
+
+dataModelAccuracy <- (bcPredictionData[[1, 1]] + bcPredictionData[[2, 2]]) / sum(bcPredictionData)
+
+dataModelAccuracy
+
+## Accuracy is approximately 58%
+```
+
+
