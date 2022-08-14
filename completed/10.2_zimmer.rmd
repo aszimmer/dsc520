@@ -1,0 +1,176 @@
+---
+title: "10.2_Zimmer.rmd"
+output: word_document
+date: '2022-08-13'
+---
+
+
+```{r}
+
+## load the binary and trinary datasets
+
+setwd("C:/Users/alexi/OneDrive/Documents/GitHub/dsc520")
+
+binary_df <- read.csv("data/binary-classifier-data.csv")
+
+trinary_df <- read.csv("~/GitHub/dsc520/data/trinary-classifier-data.csv")
+```
+
+5. Plot the data from each dataset using a scatter plot.
+```{r}
+
+binary_df$label <- as.factor(binary_df$label)
+trinary_df$label <- as.factor(trinary_df$label)
+
+library(ggplot2)
+
+ggplot(data = binary_df, aes(y = y, x = x, color = label)) + geom_point() + ggtitle("Binary Classifier Data")
+```
+
+```{r}
+ggplot(data = trinary_df, aes(y = y, x = x, color = label)) + geom_point() + ggtitle("Trinary Classifier Data")
+```
+
+Determine which points are nearest by calculating the Euclidean distance betweent wo points. 
+```{r}
+## normalize data
+
+binary <- binary_df[, c("x", "y")]
+trinary <- trinary_df[, c("x", "y")]
+
+## create train and test data
+set.seed(150)
+binary_selection <- sample(1:nrow(binary), size = nrow(binary)*0.60, replace = FALSE)
+binary_train <- binary_df[binary_selection,]
+NROW(binary_train)
+```
+```{r}
+binary_test <- binary_df[-binary_selection,]
+NROW(binary_test)
+```
+```{r}
+## create df for train and test label data
+train_label_binary <- binary_df[binary_selection, 1, drop = TRUE]
+NROW(train_label_binary)
+```
+
+```{r}
+test_label_binary <- binary_df[-binary_selection, 1, drop = TRUE]
+NROW(test_label_binary)
+```
+
+```{r}
+## create df for train and test label data (trinary)
+set.seed(130)
+trinary_selection <- sample(1:nrow(trinary), size = nrow(trinary)*0.60, replace = FALSE)
+trinary_train <- trinary_df[trinary_selection, ]
+NROW(trinary_train)
+```
+
+```{r}
+trinary_test <- trinary_df[-trinary_selection, ]
+NROW(trinary_test)
+```
+
+```{r}
+train_label_trinary <- trinary_df[trinary_selection, 1, drop = TRUE]
+NROW(train_label_trinary)
+```
+
+```{r}
+test_label_trinary <- trinary_df[-trinary_selection, 1, drop = TRUE]
+NROW(test_label_trinary)
+```
+
+Fit a k nearest neighbors' model for each datset for k = 3, k = 10, k = 15, k = 20, and k = 25. Compute the accuracy of the resulting moedls for each value of k. Plot the results in the graph where the x-axis is the different values of k and the y-axis is the accuracy of the model. 
+```{r}
+## create k nearest list (binary data)
+k_nearest <- list(3, 5, 10, 15, 20, 25)
+input = 1
+binary_accuracy = 1
+for (input in k_nearest) {
+  nearest_neighbor <- knn(train = binary_train, test = binary_test, cl = train_label_binary, k = input)
+  binary_accuracy[input] <- 100*sum(test_label_binary == nearest_neighbor)/NROW(test_label_binary)
+  k = input
+  cat(k, '=', binary_accuracy[input], '')
+}
+
+```
+
+```{r}
+## plot the results on a graph
+
+plot(binary_accuracy, type = "b", xlab = "knn value", ylab = "accuracy")
+```
+```{r}
+## repeat for trinary
+
+k_nearest_trinary <- list(3, 5, 10, 15, 20, 25)
+input_trinary = 1
+trinary_accuracy = 1
+for (input_trinary in k_nearest_trinary) {
+  trinary_nearest <- knn(train = trinary_train, test = trinary_test, cl = train_label_trinary, k = input_trinary)
+  trinary_accuracy[input_trinary] <- 100*sum(test_label_trinary == trinary_nearest)/NROW(test_label_trinary)
+  k = input_trinary
+  cat(k, '=', trinary_accuracy[input_trinary])
+}
+```
+```{r}
+## plot
+plot(trinary_accuracy, type = "b", xlab = "knn value", ylab =)
+```
+
+Looking back at the plots of the data, do you think a linear classifier would work well on those datasets? How does the accuracy of your logistic regression classifier from last week compare? Why is the accuracy different between these two methods?
+
+A: It appears that the accuracy decreased as our k-value is higher in comparison to last week's assignment. 
+
+*Clustering*
+```{r}
+## read dataset
+clustering_df <- read.csv("data/clustering-data.csv")
+```
+
+Plot the dataset using a scatterplot.
+```{r}
+ggplot(clustering_df, aes(x = x, y = y)) + geom_point() + ggtitle("Clustering Data")
+```
+Fill the dataset using the k-means algorithm from k = 2 to k = 12. Create a scatter plot of the resultant clusters for each value of k.
+```{r}
+cluster_matrix <- data.matrix(clustering_df)
+wss <- (nrow(cluster_matrix) - 1) * sum(apply(cluster_matrix, 2, var))
+total.withinss_values <- NULL
+average_distance <- NULL
+kmean_values <- NULL
+
+for (i in 2:12){
+  wss[i] <- sum(kmeans(cluster_matrix, centers=i)$tot.withinss)
+  
+  cdata <- clustering_df
+  cdata.kmeanscluster <- kmeans(cdata, i)
+  cdata$cluster <- as.factor(cdata.kmeanscluster$cluster)
+  
+  p <- ggplot(data = cdata, aes(x = x, y = y, color = cluster)) + geom_point(size = 1) + geom_point(data = as.data.frame(cdata.kmeanscluster$centers), color = "red", shape = 10, size = 2) + ggtitle(paste("K Means Cluster for K = ", i, sep ="")) + theme_bw()
+  
+  print(p)
+  
+  kmean_values <- c(kmean_values, i)
+  x.distance <- cdata.kmeanscluster$centers[cdata$cluster] - cdata$x
+  y.distance <- cdata.kmeanscluster$centers[cdata$cluster] - cdata$y
+  total.distance <- sqrt((x.distance ** 2) + (y.distance** 2))
+  average_distance <- c(average_distance, mean(total.distance))
+  total.withinss_values <- c(total.withinss_values, cdata.kmeanscluster$tot.withinss)
+
+}
+```
+To calculate the metric, simply computer the distance of each data point to the center of the cluster it is assigned to and take the average value of all of these distances. Calculate the average distance from the center of each cluster for each value of k and plot it as a line chart where k is the x-axis and y - average distance.
+
+```{r}
+avg_distdata <- data.frame(kmean_values, average_distance)
+avg_distdata
+ggplot(data = avg_distdata, aes(k = kmean_values, y = average_distance)) + xlab("Clusters") + ylab("Avg Distance") + theme_bw() + geom_point() + geom_line(color = "blue")
+
+```
+```{r}
+avg_d
+```
+
